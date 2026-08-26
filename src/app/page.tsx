@@ -4,6 +4,7 @@ import { themes } from '@/config/themes';
 
 export default function Home() {
   const [username, setUsername] = useState('');
+  const [activeUsername, setActiveUsername] = useState('');
   const [theme, setTheme] = useState('default');
   const [locale, setLocale] = useState('en');
   const [cardType, setCardType] = useState<'streak'|'graph'|'lang'|'rank'>('streak');
@@ -24,7 +25,7 @@ export default function Home() {
   const debounceTimer = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!username) {
+    if (!activeUsername) {
       setUrl('');
       return;
     }
@@ -33,7 +34,7 @@ export default function Home() {
     
     debounceTimer.current = setTimeout(() => {
       const apiRoute = cardType; 
-      let newUrl = `${window.location.origin}/api/${apiRoute}?user=${username}&theme=${theme}&locale=${locale}`;
+      let newUrl = `${window.location.origin}/api/${apiRoute}?user=${activeUsername}&theme=${theme}&locale=${locale}`;
       
       if (cardType === 'graph' && animation !== 'fade') {
         newUrl += `&animation=${animation}`;
@@ -51,7 +52,7 @@ export default function Home() {
     return () => {
       if (debounceTimer.current) clearTimeout(debounceTimer.current);
     };
-  }, [username, theme, locale, cardType, animation, hideBorder, transparentBg, useCustomColors, customBg, customBorder, customTitle, customText, customRing]);
+  }, [activeUsername, theme, locale, cardType, animation, hideBorder, transparentBg, useCustomColors, customBg, customBorder, customTitle, customText, customRing]);
 
   const showToast = (message: string) => {
     setToast({ show: true, message });
@@ -59,8 +60,8 @@ export default function Home() {
   };
 
   const copyToClipboard = () => {
-    if (!url) return;
-    navigator.clipboard.writeText(`[![GitHub Streak](${url.split('&v=')[0]})](https://github.com/${username})`);
+    if (!url || !activeUsername) return;
+    navigator.clipboard.writeText(`[![GitHub Streak](${url.split('&v=')[0]})](https://github.com/${activeUsername})`);
     showToast('Markdown copied to clipboard!');
   };
 
@@ -88,13 +89,22 @@ export default function Home() {
             
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">GitHub Username</label>
-              <input 
-                type="text" 
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
-                placeholder="e.g. torvalds"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all placeholder:text-slate-400"
+                  placeholder="e.g. torvalds"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && setActiveUsername(username)}
+                />
+                <button 
+                  onClick={() => setActiveUsername(username)}
+                  className="px-6 py-3 bg-slate-900 text-white font-semibold rounded-lg hover:bg-slate-800 transition-colors whitespace-nowrap shadow-sm active:scale-95"
+                >
+                  Preview
+                </button>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -231,7 +241,7 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(circle_800px_at_50%_50%,transparent,rgba(250,250,250,0.8))] pointer-events-none"></div>
         
         <div className="flex-1 flex items-center justify-center p-8 overflow-auto z-10">
-          {!username ? (
+          {!activeUsername ? (
             <div className="text-center space-y-4 max-w-sm">
               <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 shadow-inner">
                 <svg className="w-10 h-10 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -244,7 +254,7 @@ export default function Home() {
               <div className={`bg-white ${transparentBg ? 'bg-transparent shadow-none border-none' : 'shadow-xl border border-slate-200/60'} rounded-2xl overflow-hidden p-8 flex justify-center transition-all`}>
                 {url ? (
                   /* eslint-disable-next-line @next/next/no-img-element */
-                  <img src={url} alt={`${username}'s GitHub Stats`} className="max-w-full drop-shadow-sm" />
+                  <img src={url} alt={`${activeUsername}'s GitHub Stats`} className="max-w-full drop-shadow-sm" />
                 ) : (
                   <div className="w-[495px] h-[195px] flex items-center justify-center">
                     <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
