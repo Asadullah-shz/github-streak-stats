@@ -129,6 +129,9 @@ export function generateGraphSVG(
   const legendY = 7 * cellTotal + 25;
   const legendX = gridWidth - (5 * cellTotal + 70); 
   const legendSvg = `
+    <g transform="translate(0, ${legendY})" style="opacity: 0; animation: fadein 0.8s ease forwards 0.6s;">
+      <text x="0" y="10" font-family="'Segoe UI', Ubuntu, sans-serif" font-size="10px" fill="#${sideLabels_color}">${stats.totalContributions} contributions in the last year</text>
+    </g>
     <g transform="translate(${legendX}, ${legendY})" style="opacity: 0; animation: fadein 0.8s ease forwards 0.6s;">
       <text x="0" y="10" font-family="'Segoe UI', Ubuntu, sans-serif" font-size="10px" fill="#${sideLabels_color}">Less</text>
       <rect x="30" y="1" width="${cellSize}" height="${cellSize}" rx="2" fill="#777777" fill-opacity="0.15" />
@@ -242,11 +245,6 @@ ${!hideTitle ? `
         <g transform="translate(${startX}, 35)">
           <text x="0" y="0" font-family="'Segoe UI', Ubuntu, sans-serif" font-weight="700" font-size="20px" fill="#${title_color}">
             ${safeUsername}'s Contribution Graph
-          </text>
-        </g>
-        <g transform="translate(${startX}, 58)">
-          <text x="0" y="0" font-family="'Segoe UI', Ubuntu, sans-serif" font-weight="600" font-size="14px" fill="#${sideNums_color}" style="opacity: 0; animation: fadein 0.8s ease forwards 0.2s;">
-            ${stats.totalContributions} contributions in the last year
           </text>
         </g>
         ` : ''}
