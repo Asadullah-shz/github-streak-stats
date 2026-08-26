@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = 'https://github-streak-stats.vercel.app';
+  const baseUrl = 'https://github-streak-plum.vercel.app';
 
   return {
     rules: {
