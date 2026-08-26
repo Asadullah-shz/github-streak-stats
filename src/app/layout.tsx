@@ -21,19 +21,19 @@ export const metadata: Metadata = {
     },
   },
   alternates: {
-    canonical: 'https://github-streak-stats.vercel.app',
+    canonical: 'https://github-streak-plum.vercel.app',
     languages: {
-      'en-US': 'https://github-streak-stats.vercel.app',
+      'en-US': 'https://github-streak-plum.vercel.app',
     },
   },
   openGraph: {
     title: 'GitHub Streak Stats Generator | Open Source',
     description: 'Generate beautiful, customizable, and animated SVG cards for your GitHub README.',
-    url: 'https://github-streak-stats.vercel.app',
+    url: 'https://github-streak-plum.vercel.app',
     siteName: 'GitHub Streak Stats',
     images: [
       {
-        url: 'https://github-streak-stats.vercel.app/api/streak?user=torvalds&theme=dracula',
+        url: 'https://github-streak-plum.vercel.app/api/streak?user=torvalds&theme=dracula',
         width: 1200,
         height: 630,
         alt: 'GitHub Streak Stats Preview',
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: 'GitHub Streak Stats',
     description: 'Beautiful, animated SVG stats for your GitHub profile.',
-    images: ['https://github-streak-stats.vercel.app/api/streak?user=torvalds&theme=dracula'],
+    images: ['https://github-streak-plum.vercel.app/api/streak?user=torvalds&theme=dracula'],
   },
 };
 
