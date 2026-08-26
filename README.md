@@ -30,4 +30,4 @@ The codebase is cleanly separated into routing (`src/app`), core logic (`src/lib
 Check out [CONTRIBUTING.md](CONTRIBUTING.md) to see how to run the project locally and add your own custom cards and themes.
 
 ---
-Created with ❤️ by [Asad (Devencoder)](https://github.com/Asadullah-shz)
+Created with ❤️ by [Asadullah Shahbaz](https://github.com/Asadullah-shz)
