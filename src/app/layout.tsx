@@ -3,11 +3,32 @@ import "./globals.css";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: 'GitHub Streak Stats Generator',
-  description: 'Generate beautiful, customizable SVG cards for your GitHub README showing your streak, contributions, top languages, and GitHub rank.',
+  title: 'GitHub Streak Stats Generator | Open Source README Add-on',
+  description: 'Generate beautiful, customizable, and animated SVG cards for your GitHub README. Display your streak, total contributions, top languages, and GitHub rank instantly.',
+  keywords: ['github streak', 'github stats', 'readme stats', 'github rank', 'github profile builder', 'svg stats', 'github top languages', 'devencoder'],
+  authors: [{ name: 'Asadullah Shahbaz', url: 'https://github.com/Asadullah-shz' }],
+  creator: 'Asadullah Shahbaz',
+  publisher: 'Asadullah Shahbaz',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://github-streak-stats.vercel.app',
+    languages: {
+      'en-US': 'https://github-streak-stats.vercel.app',
+    },
+  },
   openGraph: {
-    title: 'GitHub Streak Stats Generator',
-    description: 'Generate beautiful, customizable SVG cards for your GitHub README.',
+    title: 'GitHub Streak Stats Generator | Open Source',
+    description: 'Generate beautiful, customizable, and animated SVG cards for your GitHub README.',
     url: 'https://github-streak-stats.vercel.app',
     siteName: 'GitHub Streak Stats',
     images: [
@@ -34,8 +55,33 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'GitHub Streak Stats Generator',
+    description: 'Generate beautiful, customizable SVG cards for your GitHub README showing your streak, contributions, top languages, and GitHub rank.',
+    applicationCategory: 'DeveloperApplication',
+    operatingSystem: 'Any',
+    author: {
+      '@type': 'Person',
+      name: 'Asadullah Shahbaz',
+      url: 'https://github.com/Asadullah-shz'
+    },
+    offers: {
+      '@type': 'Offer',
+      price: '0',
+      priceCurrency: 'USD'
+    }
+  };
+
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="bg-[#FAFAFA] text-slate-900 min-h-screen flex flex-col antialiased selection:bg-blue-100" suppressHydrationWarning>
         {/* Navigation Bar */}
         <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/80 backdrop-blur-md">
@@ -65,7 +111,7 @@ export default function RootLayout({
         <footer className="border-t border-slate-200 bg-white py-8 mt-12">
           <div className="max-w-6xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
            <p className="pointer-events-auto inline-block">
-            <a href="https://github.com/Asadullah-shz">Created with ❤️ by Asad </a>
+            <a href="https://github.com/Asadullah-shz">Created with ❤️ by Asadullah Shahbaz</a>
           </p>
             <div className="flex items-center gap-4 text-sm text-slate-500">
               <a href="" target="_blank" rel="noreferrer" className="hover:text-slate-900 transition-colors">Thanks for Usage</a>
