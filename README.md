@@ -31,3 +31,5 @@ Check out [CONTRIBUTING.md](CONTRIBUTING.md) to see how to run the project local
 
 ---
 Created with ❤️ by [Asadullah Shahbaz](https://github.com/Asadullah-shz)
+
+Inspired by the original GitHub Streak Stats project by DenverCoder1. Huge respect to the original developer and contributors for creating the project that inspired this work. This project is an independent alternative with additional features, fixes, and improvements.
