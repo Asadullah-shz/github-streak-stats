@@ -1,5 +1,6 @@
 import { Theme } from '@/config/themes';
 import { escapeHTML } from '@/lib/security';
+import { minifySVG } from '@/lib/minify';
 
 export function generateLangSVG(
   username: string,
@@ -50,7 +51,7 @@ export function generateLangSVG(
     `;
   });
 
-  return `
+  return minifySVG(`
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
       style="isolation: isolate" viewBox="0 0 ${svgWidth} ${svgHeight}" width="${svgWidth}px" height="${svgHeight}px" direction="ltr">
       
@@ -94,5 +95,5 @@ ${!hideTitle ? `
         </g>
       </g>
     </svg>
-  `;
+  `);
 }

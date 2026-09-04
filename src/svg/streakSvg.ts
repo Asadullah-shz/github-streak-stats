@@ -1,6 +1,7 @@
 import { Theme } from '@/config/themes';
 import { LocaleStrings } from '@/config/locales';
 import { escapeHTML } from '@/lib/security';
+import { minifySVG } from '@/lib/minify';
 
 export function generateSVG(
   username: string,
@@ -38,7 +39,7 @@ export function generateSVG(
   const yOffset = hideTitle ? -9 : 16;
   const safeUsername = escapeHTML(username);
 
-  return `
+  return minifySVG(`
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
       style="isolation: isolate" viewBox="0 0 495 195" width="495px" height="195px" direction="ltr">
       
@@ -110,5 +111,5 @@ ${!hideTitle ? `
         </g>
       </g>
     </svg>
-  `;
+  `);
 }

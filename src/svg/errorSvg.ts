@@ -1,5 +1,6 @@
 import { Theme } from '@/config/themes';
 import { escapeHTML } from '@/lib/security';
+import { minifySVG } from '@/lib/minify';
 
 export function generateErrorSVG(
   message: string,
@@ -19,7 +20,7 @@ export function generateErrorSVG(
   
   const safeErrorMessage = escapeHTML(message);
 
-  return `
+  return minifySVG(`
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
       style="isolation: isolate" viewBox="0 0 ${width} ${height}" width="${width}px" height="${height}px" direction="ltr">
       <defs>
@@ -39,5 +40,5 @@ export function generateErrorSVG(
         </g>
       </g>
     </svg>
-  `;
+  `);
 }

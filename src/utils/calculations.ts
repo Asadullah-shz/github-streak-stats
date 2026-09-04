@@ -92,7 +92,15 @@ export function calculateStats(weeks: { contributionDays: ContributionDay[] }[])
   };
 }
 
-export function processLanguageStats(userData: any, excludeLangs: string[] = []) {
+interface LanguageUserData {
+  repositories: {
+    nodes: {
+      languages: { edges: { size: number; node: { name: string; color: string | null } }[] };
+    }[];
+  };
+}
+
+export function processLanguageStats(userData: LanguageUserData, excludeLangs: string[] = []) {
   const languageMap = new Map<string, { size: number; color: string }>();
   let totalSize = 0;
   
@@ -128,13 +136,21 @@ export function processLanguageStats(userData: any, excludeLangs: string[] = [])
   return topLanguages;
 }
 
-export function calculateRank(userData: any) {
+interface RankUserData {
+  followers: { totalCount: number };
+  issues: { totalCount: number };
+  pullRequests: { totalCount: number };
+  contributionsCollection: { totalCommitContributions: number; restrictedContributionsCount: number };
+  repositories: { nodes: { stargazerCount: number }[] };
+}
+
+export function calculateRank(userData: RankUserData) {
   const followers = userData.followers.totalCount;
   const issues = userData.issues.totalCount;
   const pullRequests = userData.pullRequests.totalCount;
   const commits = userData.contributionsCollection.totalCommitContributions + userData.contributionsCollection.restrictedContributionsCount;
   
-  const stars = userData.repositories.nodes.reduce((acc: number, repo: any) => acc + repo.stargazerCount, 0);
+  const stars = userData.repositories.nodes.reduce((acc, repo) => acc + repo.stargazerCount, 0);
 
   const score = (stars * 100) + (commits * 1) + (pullRequests * 50) + (issues * 50) + (followers * 20);
 

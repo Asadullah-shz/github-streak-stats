@@ -1,6 +1,7 @@
 import { Theme } from '@/config/themes';
 import { LocaleStrings } from '@/config/locales';
 import { escapeHTML } from '@/lib/security';
+import { minifySVG } from '@/lib/minify';
 
 export function generateGraphSVG(
   username: string,
@@ -147,7 +148,7 @@ export function generateGraphSVG(
     <rect class="laser-line" x="0" y="-5" width="2" height="${7 * cellTotal + 10}" fill="#${ring_color}" style="animation-delay: 0.5s;" />
   ` : '';
 
-  return `
+  return minifySVG(`
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
       style="isolation: isolate" viewBox="0 0 ${svgWidth} ${svgHeight}" width="${svgWidth}px" height="${svgHeight}px" direction="ltr">
       
@@ -260,5 +261,5 @@ ${!hideTitle ? `
         </g>
       </g>
     </svg>
-  `;
+  `);
 }

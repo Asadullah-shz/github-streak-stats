@@ -1,13 +1,73 @@
-function getRandomToken() {
+let tokenIndex = 0;
+function getToken(): string {
   const tokens = process.env.GITHUB_TOKEN?.split(',').map(t => t.trim()).filter(Boolean) || [];
   if (tokens.length === 0) {
     throw new Error('GitHub token(s) missing from environment variables');
   }
-  return tokens[Math.floor(Math.random() * tokens.length)];
+  const token = tokens[tokenIndex % tokens.length];
+  tokenIndex++;
+  return token;
 }
 
-export async function fetchContributions(username: string, year?: number) {
-  const token = getRandomToken();
+const GITHUB_API_TIMEOUT_MS = 8000;
+
+interface ContributionData {
+  contributionsCollection: {
+    contributionCalendar: {
+      totalContributions: number;
+      weeks: { contributionDays: { contributionCount: number; date: string }[] }[];
+    };
+  };
+}
+
+interface RepositoryData {
+  repositories: {
+    nodes: {
+      stargazerCount: number;
+      languages: { edges: { size: number; node: { color: string | null; name: string } }[] };
+    }[];
+  };
+}
+
+interface UserMetaData {
+  followers: { totalCount: number };
+  issues: { totalCount: number };
+  pullRequests: { totalCount: number };
+  contributionsCollection: { restrictedContributionsCount: number; totalCommitContributions: number };
+}
+
+interface GraphQLResponse<T> {
+  data?: { user: T | null };
+  errors?: { message: string }[];
+}
+
+async function githubGraphQL<T>(query: string, variables: Record<string, unknown>): Promise<T | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), GITHUB_API_TIMEOUT_MS);
+
+  try {
+    const response = await fetch('https://api.github.com/graphql', {
+      method: 'POST',
+      headers: {
+        Authorization: `bearer ${getToken()}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query, variables }),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`GitHub API error: ${response.statusText}`);
+    const data = await response.json() as GraphQLResponse<T>;
+    if (data.errors) throw new Error(`GraphQL Error: ${data.errors[0].message}`);
+    return data.data?.user ?? null;
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') throw new Error('GitHub API request timed out');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+export async function fetchContributions(username: string, year?: number): Promise<ContributionData | null> {
 
   const query = `
     query($login: String!, $from: DateTime, $to: DateTime) {
@@ -28,42 +88,22 @@ export async function fetchContributions(username: string, year?: number) {
     }
   `;
 
-  let variables: any = { login: username };
+  const variables: Record<string, unknown> = { login: username };
   if (year) {
     variables.from = `${year}-01-01T00:00:00Z`;
     variables.to = `${year}-12-31T23:59:59Z`;
   }
 
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  
-  if (data.errors) {
-    throw new Error(`GraphQL Error: ${data.errors[0].message}`);
-  }
-
-  return data.data.user;
+  return githubGraphQL(query, variables);
 }
 
-export async function fetchTopLanguages(username: string) {
-  const token = getRandomToken();
-
+export async function fetchRepositories(username: string): Promise<RepositoryData | null> {
   const query = `
     query($login: String!) {
       user(login: $login) {
         repositories(ownerAffiliations: OWNER, isFork: false, first: 100) {
           nodes {
+            stargazerCount
             languages(first: 10, orderBy: {field: SIZE, direction: DESC}) {
               edges {
                 size
@@ -79,31 +119,10 @@ export async function fetchTopLanguages(username: string) {
     }
   `;
 
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables: { login: username } }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  
-  if (data.errors) {
-    throw new Error(`GraphQL Error: ${data.errors[0].message}`);
-  }
-
-  return data.data.user;
+  return githubGraphQL(query, { login: username });
 }
 
-export async function fetchRankData(username: string) {
-  const token = getRandomToken();
-
+export async function fetchUserMeta(username: string): Promise<UserMetaData | null> {
   const query = `
     query($login: String!) {
       user(login: $login) {
@@ -116,11 +135,6 @@ export async function fetchRankData(username: string) {
         pullRequests(first: 1) {
           totalCount
         }
-        repositories(ownerAffiliations: OWNER, isFork: false, first: 100) {
-          nodes {
-            stargazerCount
-          }
-        }
         contributionsCollection {
           restrictedContributionsCount
           totalCommitContributions
@@ -129,24 +143,5 @@ export async function fetchRankData(username: string) {
     }
   `;
 
-  const response = await fetch('https://api.github.com/graphql', {
-    method: 'POST',
-    headers: {
-      Authorization: `bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ query, variables: { login: username } }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.statusText}`);
-  }
-
-  const data = await response.json();
-  
-  if (data.errors) {
-    throw new Error(`GraphQL Error: ${data.errors[0].message}`);
-  }
-
-  return data.data.user;
+  return githubGraphQL(query, { login: username });
 }

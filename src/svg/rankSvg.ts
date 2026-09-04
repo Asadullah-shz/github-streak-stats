@@ -1,9 +1,21 @@
 import { Theme } from '@/config/themes';
 import { escapeHTML } from '@/lib/security';
+import { minifySVG } from '@/lib/minify';
+
+interface RankData {
+  rank: string;
+  percentile: number;
+  stars: number;
+  commits: number;
+  pullRequests: number;
+  issues: number;
+  followers: number;
+  score: number;
+}
 
 export function generateRankSVG(
   username: string,
-  rankData: any,
+  rankData: RankData,
   theme: Theme,
   options?: { hideTitle?: boolean }
 ) {
@@ -32,7 +44,7 @@ export function generateRankSVG(
   else if (rankData.rank === 'B') rankColor = '#60A5FA'; // Blue
   else rankColor = '#94A3B8'; // Slate
 
-  return `
+  return minifySVG(`
     <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
       style="isolation: isolate" viewBox="0 0 ${svgWidth} ${svgHeight}" width="${svgWidth}px" height="${svgHeight}px" direction="ltr">
       <style>
@@ -108,5 +120,5 @@ ${!hideTitle ? `
         </g>
       </g>
     </svg>
-  `;
+  `);
 }
