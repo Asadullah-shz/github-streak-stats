@@ -11,7 +11,37 @@ function getToken(): string {
 
 const GITHUB_API_TIMEOUT_MS = 8000;
 
-async function githubGraphQL<T = any>(query: string, variables: Record<string, any>): Promise<T> {
+interface ContributionData {
+  contributionsCollection: {
+    contributionCalendar: {
+      totalContributions: number;
+      weeks: { contributionDays: { contributionCount: number; date: string }[] }[];
+    };
+  };
+}
+
+interface RepositoryData {
+  repositories: {
+    nodes: {
+      stargazerCount: number;
+      languages: { edges: { size: number; node: { color: string | null; name: string } }[] };
+    }[];
+  };
+}
+
+interface UserMetaData {
+  followers: { totalCount: number };
+  issues: { totalCount: number };
+  pullRequests: { totalCount: number };
+  contributionsCollection: { restrictedContributionsCount: number; totalCommitContributions: number };
+}
+
+interface GraphQLResponse<T> {
+  data?: { user: T | null };
+  errors?: { message: string }[];
+}
+
+async function githubGraphQL<T>(query: string, variables: Record<string, unknown>): Promise<T | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), GITHUB_API_TIMEOUT_MS);
 
@@ -26,18 +56,18 @@ async function githubGraphQL<T = any>(query: string, variables: Record<string, a
       signal: controller.signal,
     });
     if (!response.ok) throw new Error(`GitHub API error: ${response.statusText}`);
-    const data = await response.json();
+    const data = await response.json() as GraphQLResponse<T>;
     if (data.errors) throw new Error(`GraphQL Error: ${data.errors[0].message}`);
-    return data.data.user;
-  } catch (err: any) {
-    if (err.name === 'AbortError') throw new Error('GitHub API request timed out');
-    throw err;
+    return data.data?.user ?? null;
+  } catch (error: unknown) {
+    if (error instanceof Error && error.name === 'AbortError') throw new Error('GitHub API request timed out');
+    throw error;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-export async function fetchContributions(username: string, year?: number) {
+export async function fetchContributions(username: string, year?: number): Promise<ContributionData | null> {
 
   const query = `
     query($login: String!, $from: DateTime, $to: DateTime) {
@@ -58,7 +88,7 @@ export async function fetchContributions(username: string, year?: number) {
     }
   `;
 
-  const variables: any = { login: username };
+  const variables: Record<string, unknown> = { login: username };
   if (year) {
     variables.from = `${year}-01-01T00:00:00Z`;
     variables.to = `${year}-12-31T23:59:59Z`;
@@ -67,7 +97,7 @@ export async function fetchContributions(username: string, year?: number) {
   return githubGraphQL(query, variables);
 }
 
-export async function fetchRepositories(username: string) {
+export async function fetchRepositories(username: string): Promise<RepositoryData | null> {
   const query = `
     query($login: String!) {
       user(login: $login) {
@@ -92,7 +122,7 @@ export async function fetchRepositories(username: string) {
   return githubGraphQL(query, { login: username });
 }
 
-export async function fetchUserMeta(username: string) {
+export async function fetchUserMeta(username: string): Promise<UserMetaData | null> {
   const query = `
     query($login: String!) {
       user(login: $login) {

@@ -23,6 +23,12 @@ interface CacheEnvelope<T> {
   ts: number;
 }
 
+function isCacheEnvelope<T>(value: unknown): value is CacheEnvelope<T> {
+  if (!value || typeof value !== 'object') return false;
+  const envelope = value as Partial<CacheEnvelope<T>>;
+  return typeof envelope.ts === 'number' && 'data' in envelope;
+}
+
 export async function cachedFetch<T>(
   key: string,
   fetcher: () => Promise<T>,
@@ -33,9 +39,15 @@ export async function cachedFetch<T>(
   if (redis) {
     try {
       const raw = await redis.get<CacheEnvelope<T> | string>(key);
-      const envelope: CacheEnvelope<T> | null = raw
-        ? (typeof raw === 'string' ? JSON.parse(raw) : raw)
-        : null;
+      let parsed: unknown = raw;
+      if (typeof raw === 'string') {
+        try {
+          parsed = JSON.parse(raw) as unknown;
+        } catch {
+          parsed = null;
+        }
+      }
+      const envelope = isCacheEnvelope<T>(parsed) ? parsed : null;
 
       if (envelope) {
         const ageSeconds = (Date.now() - envelope.ts) / 1000;

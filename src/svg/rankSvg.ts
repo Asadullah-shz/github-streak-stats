@@ -2,9 +2,20 @@ import { Theme } from '@/config/themes';
 import { escapeHTML } from '@/lib/security';
 import { minifySVG } from '@/lib/minify';
 
+interface RankData {
+  rank: string;
+  percentile: number;
+  stars: number;
+  commits: number;
+  pullRequests: number;
+  issues: number;
+  followers: number;
+  score: number;
+}
+
 export function generateRankSVG(
   username: string,
-  rankData: any,
+  rankData: RankData,
   theme: Theme,
   options?: { hideTitle?: boolean }
 ) {
