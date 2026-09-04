@@ -1,1 +1,90 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+	color-scheme: light;
+}
+
+html.dark {
+	color-scheme: dark;
+}
+
+html.dark body {
+	background: #0b1220 !important;
+	color: #e5edf8 !important;
+}
+
+html.dark header,
+html.dark footer,
+html.dark .bg-white {
+	background-color: #111b2e !important;
+}
+
+html.dark main,
+html.dark .bg-\[\#FAFAFA\],
+html.dark .bg-\[\#fafafa\] {
+	background-color: #0b1220 !important;
+}
+
+html.dark .bg-slate-50,
+html.dark .bg-slate-100 {
+	background-color: #17243a !important;
+}
+
+html.dark .bg-slate-200 {
+	background-color: #263752 !important;
+}
+
+html.dark .text-slate-900,
+html.dark .text-slate-800,
+html.dark .text-slate-700 {
+	color: #e5edf8 !important;
+}
+
+html.dark .text-slate-600,
+html.dark .text-slate-500,
+html.dark .text-slate-400 {
+	color: #9aabc3 !important;
+}
+
+html.dark .border-slate-100,
+html.dark .border-slate-200,
+html.dark .border-slate-200\/60 {
+	border-color: #2a3a55 !important;
+}
+
+html.dark input,
+html.dark select {
+	color: #e5edf8;
+	background-color: #17243a;
+}
+
+html.dark input::placeholder {
+	color: #8293ad;
+}
+
+html.dark .theme-toggle {
+	color: #f7c948;
+	background: #1c2b45;
+	border-color: #34496b;
+}
+
+.theme-toggle {
+	display: inline-flex;
+	width: 2rem;
+	height: 2rem;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid #dbe3ee;
+	border-radius: 9999px;
+	color: #334155;
+	background: #f8fafc;
+	font-size: 1rem;
+	line-height: 1;
+	transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease;
+}
+
+.theme-toggle:hover {
+	background: #e2e8f0;
+}

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Link from "next/link";
+import ThemeToggle from './theme-toggle';
 
 export const metadata: Metadata = {
   title: 'GitHub Streak Stats Generator | Open Source README Add-on',
@@ -97,6 +98,7 @@ export default function RootLayout({
               <Link href="/" className="hover:text-slate-900 transition-colors">Generator</Link>
               <Link href="/themes" className="hover:text-slate-900 transition-colors">Themes</Link>
               <Link href="/deploy" className="hover:text-slate-900 transition-colors">Deploy Guide</Link>
+              <ThemeToggle />
             </nav>
           </div>
         </header>
