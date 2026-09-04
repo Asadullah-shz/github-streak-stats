@@ -8,8 +8,8 @@ import { getTheme, Theme } from '@/config/themes';
 
 export const runtime = 'edge';
 
-const FRESH_SECONDS = 1800;
-const STALE_SECONDS = 604800;
+const FRESH_SECONDS = 1800;      // 30 min: serve straight from cache, no revalidation
+const STALE_SECONDS = 604800;    // 7 days: outer bound before a truly synchronous refetch
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -36,10 +36,12 @@ export async function GET(request: NextRequest) {
       theme.border_color = 'transparent';
     }
 
-    const rawData = await cachedFetch(`repos:${username}`, () => fetchRepositories(username), {
-      freshSeconds: FRESH_SECONDS,
-      staleSeconds: STALE_SECONDS,
-    });
+    // Same cache key as /api/rank uses for its repo data. The exclude_langs
+    // filter is applied after this shared fetch rather than baked into the
+    // cache key, so different exclude_langs values for the same user reuse
+    // one cached repo list instead of triggering a separate GitHub call each.
+    const cacheKey = `repos:${username}`;
+    const rawData = await cachedFetch(cacheKey, () => fetchRepositories(username), { freshSeconds: FRESH_SECONDS, staleSeconds: STALE_SECONDS });
 
     if (!rawData) {
       const errorSvg = generateErrorSVG(`User ${username} not found on GitHub`, theme, 495, hideTitleParam ? 150 : 195);

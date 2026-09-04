@@ -1,23 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchRepositories } from '@/lib/github';
+import { fetchContributions } from '@/lib/github';
 import { cachedFetch } from '@/lib/redis';
-import { processLanguageStats } from '@/utils/calculations';
-import { generateLangSVG } from '@/svg/langSvg';
+import { calculateStats } from '@/utils/calculations';
+import { generateSVG } from '@/svg/streakSvg';
 import { generateErrorSVG } from '@/svg/errorSvg';
 import { getTheme, Theme } from '@/config/themes';
+import { getLocale } from '@/config/locales';
 
 export const runtime = 'edge';
 
-const FRESH_SECONDS = 1800;
-const STALE_SECONDS = 604800;
+const FRESH_SECONDS = 1800;      // 30 min: serve straight from cache, no revalidation
+const STALE_SECONDS = 604800;    // 7 days: outer bound before a truly synchronous refetch
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const username = searchParams.get('user');
   const themeParam = searchParams.get('theme') || 'default';
-  const hideTitleParam = searchParams.get('hide_title') ? searchParams.get('hide_title') === 'true' : false;
-  const excludeLangsParam = searchParams.get('exclude_langs') || '';
-  const excludeLangs = excludeLangsParam ? excludeLangsParam.split(',') : [];
+  const localeParam = searchParams.get('locale') || 'en';
+  const hideTitleParam = searchParams.get('hide_title') ? searchParams.get('hide_title') === 'true' : true;
 
   if (!username) {
     return new NextResponse('Missing user parameter', { status: 400 });
@@ -25,32 +25,35 @@ export async function GET(request: NextRequest) {
 
   try {
     const baseTheme = getTheme(themeParam);
+    const localeStrings = getLocale(localeParam);
+
     const theme: Theme = { ...baseTheme };
-    const customKeys = ['bg_color', 'border_color', 'title_color', 'text_color', 'sideLabels_color'] as const;
+    const customKeys = ['bg_color', 'border_color', 'title_color', 'text_color', 'ring_color', 'fire_color', 'currStreakNum_color', 'sideNums_color', 'currStreakLabel_color', 'sideLabels_color', 'dates_color'] as const;
     customKeys.forEach(key => {
       const val = searchParams.get(key);
-      if (val) (theme as any)[key] = val;
+      if (val) theme[key] = val;
     });
 
     if (searchParams.get('hide_border') === 'true') {
       theme.border_color = 'transparent';
     }
 
-    const rawData = await cachedFetch(`repos:${username}`, () => fetchRepositories(username), {
-      freshSeconds: FRESH_SECONDS,
-      staleSeconds: STALE_SECONDS,
-    });
+    // Same cache key shape as /api/graph's no-year case: a README embedding
+    // both the streak card and the graph card reuses one cached GitHub call
+    // instead of two.
+    const cacheKey = `contrib:${username}`;
+    const contributions = await cachedFetch(cacheKey, () => fetchContributions(username), { freshSeconds: FRESH_SECONDS, staleSeconds: STALE_SECONDS });
 
-    if (!rawData) {
+    if (!contributions) {
       const errorSvg = generateErrorSVG(`User ${username} not found on GitHub`, theme, 495, hideTitleParam ? 150 : 195);
       return new NextResponse(errorSvg, {
         headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-cache, no-store' },
       });
     }
 
-    const stats = processLanguageStats(rawData, excludeLangs);
+    const stats = calculateStats(contributions.contributionsCollection.contributionCalendar.weeks);
 
-    const svg = generateLangSVG(username, stats, theme, { hideTitle: hideTitleParam });
+    const svg = generateSVG(username, stats, theme, localeStrings, { hideTitle: hideTitleParam });
 
     return new NextResponse(svg, {
       headers: {

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchRankData } from '@/lib/github';
+import { fetchRepositories, fetchUserMeta } from '@/lib/github';
+import { cachedFetch } from '@/lib/redis';
 import { calculateRank } from '@/utils/calculations';
 import { generateRankSVG } from '@/svg/rankSvg';
 import { generateErrorSVG } from '@/svg/errorSvg';
 import { getTheme, Theme } from '@/config/themes';
-import { getRedisClient } from '@/lib/redis';
 
 export const runtime = 'edge';
 
-const redis = getRedisClient();
+const FRESH_SECONDS = 1800;
+const STALE_SECONDS = 604800;
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -34,39 +35,19 @@ export async function GET(request: NextRequest) {
       theme.border_color = 'transparent';
     }
 
-    const cacheKey = `rank_stats:${username}`;
-    let rankData: any = null;
+    const [repoData, userMeta] = await Promise.all([
+      cachedFetch(`repos:${username}`, () => fetchRepositories(username), { freshSeconds: FRESH_SECONDS, staleSeconds: STALE_SECONDS }),
+      cachedFetch(`user_meta:${username}`, () => fetchUserMeta(username), { freshSeconds: FRESH_SECONDS, staleSeconds: STALE_SECONDS }),
+    ]);
 
-    if (redis) {
-      try {
-        rankData = await redis.get(cacheKey);
-      } catch (e) {
-        console.error('Redis cache GET error:', e);
-      }
+    if (!repoData || !userMeta) {
+      const errorSvg = generateErrorSVG(`User ${username} not found on GitHub`, theme, 495, hideTitleParam ? 150 : 195);
+      return new NextResponse(errorSvg, {
+        headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-cache, no-store' },
+      });
     }
 
-    if (!rankData) {
-      const rawData = await fetchRankData(username);
-      
-      if (!rawData) {
-        const errorSvg = generateErrorSVG(`User ${username} not found on GitHub`, theme, 495, hideTitleParam ? 150 : 195);
-        return new NextResponse(errorSvg, {
-          headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-cache, no-store' },
-        });
-      }
-
-      rankData = calculateRank(rawData);
-      
-      if (redis) {
-        try {
-          await redis.setex(cacheKey, 14400, JSON.stringify(rankData));
-        } catch (e) {
-          console.error('Redis cache SET error:', e);
-        }
-      }
-    } else if (typeof rankData === 'string') {
-      rankData = JSON.parse(rankData);
-    }
+    const rankData = calculateRank({ ...userMeta, repositories: repoData.repositories });
 
     const svg = generateRankSVG(username, rankData, theme, { hideTitle: hideTitleParam });
 

@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchContributions } from '@/lib/github';
+import { cachedFetch } from '@/lib/redis';
 import { generateGraphSVG } from '@/svg/graphSvg';
 import { generateErrorSVG } from '@/svg/errorSvg';
 import { getTheme, Theme } from '@/config/themes';
 import { getLocale } from '@/config/locales';
-import { getRedisClient } from '@/lib/redis';
 
 export const runtime = 'edge';
 
-const redis = getRedisClient();
+const FRESH_SECONDS = 1800;
+const STALE_SECONDS = 604800;
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -38,42 +39,23 @@ export async function GET(request: NextRequest) {
       theme.border_color = 'transparent';
     }
 
-    const cacheKey = yearParam ? `graph_stats:${username}:${yearParam}` : `graph_stats:${username}`;
-    let stats: any = null;
+    const cacheKey = yearParam ? `contrib:${username}:${yearParam}` : `contrib:${username}`;
+    const contributions = await cachedFetch(cacheKey, () => fetchContributions(username, yearParam), {
+      freshSeconds: FRESH_SECONDS,
+      staleSeconds: STALE_SECONDS,
+    });
 
-    if (redis) {
-      try {
-        stats = await redis.get(cacheKey);
-      } catch (e) {
-        console.error('Redis cache GET error:', e);
-      }
+    if (!contributions) {
+      const errorSvg = generateErrorSVG(`User ${username} not found on GitHub`, theme, 840, hideTitleParam ? 210 : 260);
+      return new NextResponse(errorSvg, {
+        headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-cache, no-store' },
+      });
     }
 
-    if (!stats) {
-      const contributions = await fetchContributions(username, yearParam);
-      
-      if (!contributions) {
-        const errorSvg = generateErrorSVG(`User ${username} not found on GitHub`, theme, 840, hideTitleParam ? 210 : 260);
-        return new NextResponse(errorSvg, {
-          headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'no-cache, no-store' },
-        });
-      }
-
-      stats = {
-        totalContributions: contributions.contributionsCollection.contributionCalendar.totalContributions,
-        weeks: contributions.contributionsCollection.contributionCalendar.weeks
-      };
-      
-      if (redis) {
-        try {
-          await redis.setex(cacheKey, 14400, JSON.stringify(stats));
-        } catch (e) {
-          console.error('Redis cache SET error:', e);
-        }
-      }
-    } else if (typeof stats === 'string') {
-      stats = JSON.parse(stats);
-    }
+    const stats = {
+      totalContributions: contributions.contributionsCollection.contributionCalendar.totalContributions,
+      weeks: contributions.contributionsCollection.contributionCalendar.weeks,
+    };
 
     const svg = generateGraphSVG(username, stats, theme, localeStrings, { hideTitle: hideTitleParam, animation: animationParam });
 
