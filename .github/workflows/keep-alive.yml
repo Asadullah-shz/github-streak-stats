@@ -13,4 +13,4 @@ jobs:
     steps:
       - name: Ping App Root to Prevent Cold Starts
 
-        run: curl -s "github-streak-plum.vercel.app" > /dev/null
+        run: curl -s "https://github-streak-plum.vercel.app" > /dev/null
