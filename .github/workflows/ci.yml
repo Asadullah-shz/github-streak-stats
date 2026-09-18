@@ -4,10 +4,6 @@ on:
   pull_request:
     branches:
       - main
-  workflow_dispatch:
-  schedule:
-    - cron: '5 0,12 * * *'
-      timezone: 'Asia/Karachi'
 
 jobs:
   build:
@@ -16,12 +12,12 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v5
+        uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install Dependencies
