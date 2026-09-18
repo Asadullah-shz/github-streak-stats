@@ -1,0 +1,16 @@
+name: Keep Alive Server
+
+on:
+  schedule:
+
+    - cron: '0 7,19 * * *'
+
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping App Root to Prevent Cold Starts
+
+        run: curl -s "github-streak-plum.vercel.app" > /dev/null
