@@ -4,6 +4,9 @@ on:
   pull_request:
     branches:
       - main
+  schedule:
+    - cron: '0 0,12 * * *'
+      timezone: 'Asia/Karachi'
 
 jobs:
   build:
